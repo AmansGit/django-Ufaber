@@ -23,17 +23,27 @@ class ProjectName(models.Model):
 
 
 # AFTER LOGGED IN
-class UserLog(models.Model):
+class Task(models.Model):
+	__tablename__ = "task"
 	id = models.AutoField(primary_key=True)
 	task_name = models.CharField(max_length=50, blank=False, null=False)
-	project_name = models.ForeignKey(ProjectName, on_delete=models.CASCADE)
+	project_id = models.ForeignKey(ProjectName, on_delete=models.CASCADE)
+	created_at = models.TimeField(auto_now_add=True)
+	updated_at = models.TimeField(auto_now=True)
+	is_delete = models.BooleanField(default=False)
+
+
+class TaskLog(models.Model):
+	__tablename__= "task_log"
+	id = models.AutoField(primary_key=True)
+	task_id = models.ForeignKey(Task, blank=False, null=False, on_delete=models.CASCADE)
 	start_time = models.TimeField()
 	end_time = models.TimeField()
 	duration = models.DurationField()
 
 
-# 	def save(self, *args, **kwargs ):
+	# def save(self, *args, **kwargs ):
 
 
-# 	def __str__(self):
-# 		return self.task_name
+	# def __str__(self):
+	# 	return self.task_name

@@ -1,7 +1,7 @@
 from django.db import models
 from django import forms
 
-# new user::
+# NEW USER
 class UserRegistration(models.Model):
 	id = models.AutoField(primary_key=True, default=True)
 	username = models.CharField(max_length=11, unique=True, null=False)
@@ -37,7 +37,6 @@ class Task(models.Model):
 	is_delete = models.BooleanField(default=False)
 	class Meta:
 		db_table = "task"
-
 
 class TaskLog(models.Model):
 	id = models.AutoField(primary_key=True)

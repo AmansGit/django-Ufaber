@@ -1,6 +1,5 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest
-from django.contrib.auth.decorators import login_required
 
 import json, pytz
 from datetime import datetime, timezone
@@ -10,8 +9,6 @@ from .utils import JsonWebToken
 from . import utils 
 from .middleware import authenticate
 
-
-# @csrf_exempt
 def new_user_registration(request):
 	response = None
 	if request.method == 'POST':
@@ -103,7 +100,6 @@ def task(request):
 				})
 	return HttpResponse(response, content_type='text/json')
 
-
 @authenticate
 def test(request):
 	response = {
@@ -136,9 +132,6 @@ def projects(request):
 
 	return HttpResponse(json.dumps(response), content_type='text/json')
 
-
-
-
 @authenticate
 def task_works_on(request):
 	response = {}
@@ -169,10 +162,6 @@ def task_works_on(request):
 				response['data'] = None
 				response['message'] = "Task is already going on, Please Off the task"
 				response['status'] = "Failed"
-
-
-
-
 		else:
 			print(len(task_log_list))
 			if len(task_log_list) == 0:
@@ -192,6 +181,3 @@ def task_works_on(request):
 				response['status'] = "Success"	
 
 	return HttpResponse(json.dumps(response), content_type='text/json')
-
-def task_status():
-	pass

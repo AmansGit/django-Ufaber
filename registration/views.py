@@ -1,14 +1,11 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseBadRequest
+from django.contrib.auth.decorators import login_required
+
+import json, pytz
+from datetime import datetime, timezone
 
 from .models import UserRegistration, ProjectName, Task, TaskLog
-
-# from django.contrib.auth.forms import UserCreationForm
-
-from django.contrib.auth.decorators import login_required
-# from django.contrib.auth.decorators.csrf import csrf_exempt
-import json
-
 from .utils import JsonWebToken
 from . import utils 
 from .middleware import authenticate
@@ -29,7 +26,7 @@ def new_user_registration(request):
 		try:
 
 			usrregistr.save()
-			print(usrregistr)
+			# print(usrregistr)
 			response = json.dumps([{'Success': 'Registered carefully!!'}])
 		except:
 			response = json.dumps([{'Error': 'Something went wrong!! Try Agian'}])
@@ -44,15 +41,15 @@ def login(request):
 		username = body['username']
 		password = body['password']
 		user_data = UserRegistration.objects.filter(username=username).first()
-		print(user_data)
+		# print(user_data)
 		if user_data == None:
 			response['data'] = None
 			response['message'] = "User Not found"
 			response['status'] = "Failed"
 		else:
-			print(user_data.password)
+			# print(user_data.password)
 			varified = utils.password_varify(password, user_data.password)
-			print(varified)
+			# print(varified)
 			if varified == False:
 				response['data'] = None
 				response['message'] = "User not verified"
@@ -77,18 +74,35 @@ def task(request):
 		student_task = json.loads(request.body)
 		task_name = student_task['task_name']
 		project_id = student_task['project_id']
-		created_at = student_task['created_at']
-		updated_at = student_task['updated_at']
-		is_delete = student_task['is_delete']
-		task_list = Task(task_name = task_name, project_id = project_id, created_at = created_at)
-
+		# is_delete = student_task['is_delete']
+		# task_obj = Task.objects.filter(task_name = task_name, project_id=ProjectName)
+		
 		try:
-			task_list.save()
-			print(task_list)
-			response = json.dumps([{'Success': 'Task Entered'}])
-		except:
-			response = json.dumps([{'Error': 'Not Entered, Something went wrong'}])
+			project = ProjectName.objects.filter(id = project_id).first()
+			if not project:
+				raise Exception("Project Not Found") 
+			# print("request.user.id: ", request.user.id)
+			# print("project.id: ", project.id)
+			task_obj = Task(task_name = task_name, project_id = project, user_id = request.user)
+			# print("task_obj:", task_obj)
+			task_obj.save()
+			# print("task_obj.project_id: ", task_obj)
+			response = json.dumps({
+					"data": {"task_id": task_obj.id},
+					'message': 'Task Created',
+					"status": "Success"
+				})
+		except Exception as e:
+			# print(e)
+			
+			response = json.dumps({
+					"data": None,
+					"message": str(e),
+					"status": "Failed"
+
+				})
 	return HttpResponse(response, content_type='text/json')
+
 
 @authenticate
 def test(request):
@@ -99,10 +113,6 @@ def test(request):
 		print('GET method')
 	return HttpResponse(json.dumps(response), content_type='text/json')
 
-
-
-
-
 @authenticate
 def projects(request):
 	response = {}
@@ -112,7 +122,7 @@ def projects(request):
 	
 	if request.method == "GET":
 		data = ProjectName.objects.filter().all()
-		print(data)
+		# print(data)
 		formatted_data = []
 		for b in data:
 			formatted_data.append({
@@ -129,15 +139,59 @@ def projects(request):
 
 
 
-# def home(request):
-# 	return render(request, 'registration/home.html')
+@authenticate
+def task_works_on(request):
+	response = {}
+	body = json.loads(request.body)
+	task_id = body['task_id']
+	task_obj = Task.objects.filter(id=task_id).first()
+	if not task_obj:
+		response['data'] = None
+		response['message'] = "Task not found"
+		response['status'] = "Failed"
+	else:
+		task_status = body['task_status']
+		print(task_status)
+		task_log_list = TaskLog.objects.filter(end_time = None, task_id=task_obj.id).all()
 
-# @login_required
-# def dashboardView(request):
-# 	return render(request, 'registration/dashboard.html')
+		if task_status:
+			print(len(task_log_list))
+			if len(task_log_list) == 0:
+				new_task_log = TaskLog(task_id=task_obj, start_time = datetime.now(timezone.utc))
+				new_task_log.save()
+				print(new_task_log)
+
+				response['data'] = None
+				response['message'] = "Task Created"
+				response['status'] = "Success"	
+
+			else:
+				response['data'] = None
+				response['message'] = "Task is already going on, Please Off the task"
+				response['status'] = "Failed"
 
 
 
 
+		else:
+			print(len(task_log_list))
+			if len(task_log_list) == 0:
+				response['data'] = None
+				response['message'] = "Task log not yet started"
+				response['status'] = "Failed"
+			else:
+				for task_log in task_log_list:
+					task_log.end_time = datetime.now(timezone.utc)
+					print("task_log.end_time::", task_log.end_time)
+					print("task_log.start_time::", task_log.start_time)
+					task_log.duration = task_log.end_time - task_log.start_time
+					task_log.save()
 
+				response['data'] = None
+				response['message'] = "Task ended"
+				response['status'] = "Success"	
 
+	return HttpResponse(json.dumps(response), content_type='text/json')
+
+def task_status():
+	pass

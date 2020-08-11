@@ -29,7 +29,7 @@ class JsonWebToken:
 	def encryption(self, body={}):
 		current_time = datetime.datetime.now()
 		body['iat'] = current_time.timestamp()
-		body['exp'] = (current_time + datetime.timedelta(seconds = 500)).timestamp()
+		body['exp'] = (current_time + datetime.timedelta(seconds = 10000)).timestamp()
 		return jwt.encode(body, self.secret_key, algorithm='HS256').decode('utf-8')
 
 	def decryption(self, token):

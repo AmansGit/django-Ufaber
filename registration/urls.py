@@ -13,6 +13,7 @@ urlpatterns = [
 
     path('task/', task, name='task'),
     path('project/', projects, name='projects'),
+    path('tasklog/', task_works_on, name='task_log'),
 
 
 ]

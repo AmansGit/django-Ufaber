@@ -1,6 +1,7 @@
 from .utils import JsonWebToken
 from django.http import HttpResponse
 import json
+from .models import *
 
 def authenticate(func_name):
 	def middleware(request):
@@ -11,7 +12,7 @@ def authenticate(func_name):
 			# print("token not found")
 			response = {}
 			response['data'] = None
-			response['message'] = "Toekn Not found"
+			response['message'] = "Token Not found"
 			response['status'] = "Failed"
 			return HttpResponse(json.dumps(response), content_type='text/json', status=401)
 
@@ -29,6 +30,15 @@ def authenticate(func_name):
 				response['status'] = "Failed"
 				return HttpResponse(json.dumps(response), content_type='text/json', status=400)
 
+			if(auth_object['id']):
+				auth_object = UserRegistration.objects.filter(id=auth_object['id']).first()
+			
+			if(not auth_object):
+				response = {}
+				response['data'] = None
+				response['message'] = "User not found"
+				response['status'] = "Failed"
+				return HttpResponse(json.dumps(response), content_type='text/json', status=404)
 			request.user = auth_object
 			return func_name(request)
 
